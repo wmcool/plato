@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
     parser.parse_check(argc, argv);
     string action = parser.get<string>("action");
 
-    double max_error = 500;
+    double max_error = 200;
     double error_guarantee = 0.;
     cout.precision(10);
     if(action == "import") {
@@ -35,8 +35,8 @@ int main(int argc, char *argv[]) {
         vector<Segment> segments = read_segments(table_name);
         double avg = average(segments, error_guarantee);
         cout << fixed << "average: " << avg << " error guarantee: " << error_guarantee << endl;
-//        vector<double> data = readfile("data");
-//        cout<< fixed << "true average: " << true_average(data) << endl;
+        vector<double> data = readfile("data1");
+        cout<< fixed << "true average: " << true_average(data) << endl;
     }else if(action == "sigma") {
         string table_name = parser.get<string>("table");
         vector<Segment> segments = read_segments(table_name);
@@ -51,8 +51,8 @@ int main(int argc, char *argv[]) {
         vector<Segment> segments2 = read_segments(table2_name);
         double corr = correlation(segments1, segments2, error_guarantee);
         cout << fixed << "correlation: " << corr << " error guarantee: " << error_guarantee << endl;
-        vector<double> data1 = readfile("High.txt");
-        vector<double> data2 = readfile("Low.txt");
+        vector<double> data1 = readfile("Open.txt");
+        vector<double> data2 = readfile("Close.txt");
         cout<< fixed << "true correlation: " << true_corr(data1, data2) << endl;
     }else if(action == "ccorr") {
         string table1_name = parser.get<string>("table1");

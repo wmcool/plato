@@ -27,20 +27,46 @@ std::vector<double> readfile(const std::string& file_name) {
 }
 
 void write_segments(const std::vector<Segment>& segments, const std::string& file_name) {
-    std::ofstream out(file_name);
-    int n = segments.size();
-    for(int i=0;i<n;i++) {
-        out << serialize(segments[i]) << "\n";
+    std::ofstream out(file_name, std::ios::out | std::ios::binary);
+    for(Segment s : segments) {
+        out.write((char*)&s.begin, sizeof(int));
+        out.write((char*)&s.end, sizeof(int));
+        out.write((char*)&s.epsilon, sizeof(double));
+        out.write((char*)&s.f, sizeof(double));
+        out.write((char*)&s.gamma, sizeof(double));
+        for(double param : s.param) {
+            out.write((char*)&param, sizeof(double));
+        }
     }
     out.close();
 }
 
 std::vector<Segment> read_segments(const std::string& file_name) {
-    std::ifstream in(file_name);
-    std::string s;
+    std::ifstream in(file_name, std::ios::in | std::ios::binary);
     std::vector<Segment> segments;
-    while(std::getline(in, s)) {
-        segments.push_back(deserialize(s));
+    in.seekg(0, std::ios::end);
+    int size = in.tellg();
+    in.seekg(0, std::ios::beg);
+    while(in.tellg() < size) {
+        int begin;
+        int end;
+        double epsilon;
+        double f;
+        double gamma;
+        std::vector<double> param;
+        double a;
+        double b;
+        in.read((char*)(&begin), sizeof(int));
+        in.read((char*)(&end), sizeof(int));
+        in.read((char*)(&epsilon), sizeof(double));
+        in.read((char*)(&f), sizeof(double));
+        in.read((char*)(&gamma), sizeof(double));
+        in.read((char*)(&a), sizeof(double));
+        in.read((char*)(&b), sizeof(double));
+        param.push_back((a));
+        param.push_back((b));
+        Segment segment(param, begin, end, epsilon, f, gamma);
+        segments.push_back(segment);
     }
     in.close();
     return segments;
