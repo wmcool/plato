@@ -33,7 +33,8 @@ int main(int argc, char *argv[]) {
         string output_name = parser.get<string>("output_name");
         vector<double> data = readfile(filename);
         SlidingWindow sw;
-        std::vector<Segment> segments = sw.create_segments(data, max_error, linear_regression);
+//        std::vector<Segment> segments = sw.create_segments(data, max_error, linear_regression);
+        std::vector<Segment> segments = sw.create_segments_opt(data, max_error);
         write_segments(segments, output_name);
     }else if(action == "average") {
         string table_name = parser.get<string>("table");
@@ -49,9 +50,10 @@ int main(int argc, char *argv[]) {
             start = clock();
             double ta = true_average(data);
             end = clock();
+            double te = abs(ta - avg);
             cout << fixed << "true average: " << ta << " time cost: "<< (end - start) / CLOCKS_PER_SEC << "s" << endl;
-            cout << fixed << "true error: " << abs(ta - avg) << endl;
-            cout << fixed << "ratio: " << abs((ta - avg) / ta) << endl;
+            cout << fixed << "true error: " << te << endl;
+            cout << fixed << "ratio: " << abs(te - error_guarantee) / te << endl;
         }
     }else if(action == "sigma") {
         string table_name = parser.get<string>("table");
@@ -67,9 +69,10 @@ int main(int argc, char *argv[]) {
             start = clock();
             double ts = true_sigma(data);
             end = clock();
+            double te = abs(ts-sigma);
             cout << fixed << "true sigma: " << ts << " time cost: "<< (end - start) / CLOCKS_PER_SEC << "s" << endl;
-            cout << fixed << "true error:" << abs(ts-sigma) << endl;
-            cout << fixed << "ratio:" << abs((ts-sigma) / ts) << endl;
+            cout << fixed << "true error: " << te << endl;
+            cout << fixed << "ratio: " << abs((te - error_guarantee) / te) << endl;
         }
     }else if(action == "corr") {
         string table1_name = parser.get<string>("table1");
@@ -89,9 +92,10 @@ int main(int argc, char *argv[]) {
             start = clock();
             double tc = true_corr(data1, data2);
             end = clock();
+            double te = abs(tc - corr);
             cout << fixed << "true correlation: " << tc << " time cost: "<< (double)(end - start) / CLOCKS_PER_SEC << "s" << endl;
-            cout << fixed << "true error: " << abs(tc - corr) << endl;
-            cout << fixed << "ratio: " << abs((tc - corr) / tc) << endl;
+            cout << fixed << "true error: " << te << endl;
+            cout << fixed << "ratio: " << abs((te - error_guarantee) / te) << endl;
         }
     }else if(action == "ccorr") {
         string table1_name = parser.get<string>("table1");
@@ -112,9 +116,10 @@ int main(int argc, char *argv[]) {
             start = clock();
             double tcc = true_ccorr(data1, data2, shift);
             end = clock();
+            double te = abs(tcc - ccorr);
             cout << fixed << "true cross-correlation: " << tcc << " time cost: "<< (end - start) / CLOCKS_PER_SEC << "s" << endl;
-            cout << fixed << "true error: " << abs(tcc - ccorr) << endl;
-            cout << fixed << "ratio: " << abs((tcc - ccorr) / tcc) << endl;
+            cout << fixed << "true error: " << te << endl;
+            cout << fixed << "ratio: " << abs((te - error_guarantee) / te) << endl;
         }
     }else if(action == "acorr") {
         string table_name = parser.get<string>("table");
@@ -131,9 +136,10 @@ int main(int argc, char *argv[]) {
             start = clock();
             double ta = true_ccorr(data, data, shift);
             end = clock();
+            double te = abs(ta - acorr);
             cout << fixed << "true auto-correlation: " << ta << " time cost: "<< (end - start) / CLOCKS_PER_SEC << "s" << endl;
-            cout << fixed << "true error: " << abs(ta - acorr) << endl;
-            cout << fixed << "ratio: " << abs((ta - acorr) / ta) << endl;
+            cout << fixed << "true error: " << te << endl;
+            cout << fixed << "ratio: " << abs((te - error_guarantee) / te) << endl;
         }
     }
     return 0;

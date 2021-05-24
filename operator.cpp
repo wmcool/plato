@@ -18,7 +18,7 @@ double average(const std::vector<Segment>& segments, double& error_guarantee) {
         error_guarantee += segment.gamma;
     }
     error_guarantee /= n;
-    return res/n;
+    return res / n;
 }
 
 double standard_deviation(std::vector<Segment>& segments, double& error_guarantee) {

@@ -17,6 +17,13 @@ public:
     Segment(std::vector<double> param, int begin, int end, double epsilon, double f, double gamma);
 };
 
+class Interval{
+public:
+    int begin;
+    int end;
+    Interval(int begin, int end);
+};
+
 class Estimator{
 public:
     virtual std::vector<Segment> create_segments(std::vector<double> data, double max_error, double (*ff)(std::vector<double> data, std::vector<double> &param, int offset, double& epsilon, double& f, double& gamma)) = 0;
@@ -26,7 +33,7 @@ class SlidingWindow : public Estimator{
 public:
     std::vector<Segment> create_segments(std::vector<double> data, double max_error, double (*ff)(std::vector<double> data, std::vector<double> &param, int offset, double& epsilon, double& f, double& gamma)) override;
 
-//    std::vector<Segment> create_segments_opt(std::vector<double> data, double max_error);
+    std::vector<Segment> create_segments_opt(std::vector<double> data, double max_error);
 };
 
 std::string serialize(const Segment& segment);
@@ -48,7 +55,11 @@ double sum_of_times(const std::vector<Segment>& segments1, const std::vector<Seg
 
 double compute_gamma_f(const std::vector<Segment>& segments1, const std::vector<Segment>& segments2);
 
+double compute_gamma_f_opt(const std::vector<Segment>& segments1, const std::vector<Segment>& segments2);
+
 double compute_gamma_gamma(const std::vector<Segment>& segments1, const std::vector<Segment>& segments2);
+
+double compute_gamma_gamma_opt(const std::vector<Segment>& segments1, const std::vector<Segment>& segments2);
 
 #endif //PLATO_SEGMENT_H
 

@@ -14,6 +14,9 @@
 Segment::Segment(std::vector<double> param, int begin, int end, double epsilon, double f, double gamma) :
 param(std::move(param)), begin(begin), end(end), epsilon(epsilon), f(f), gamma(gamma){}
 
+Interval::Interval(int begin, int end) :
+begin(begin), end(end){}
+
 std::string serialize(const Segment& segment) {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(6) << segment.begin << " " << segment.end << " " <<
@@ -112,40 +115,65 @@ std::vector<Segment> SlidingWindow::create_segments(std::vector<double> data, do
     return segments;
 }
 
-//std::vector<Segment> SlidingWindow::create_segments_opt(std::vector<double> data, double max_error) {
-//    std::vector<Segment> segments;
-//    int anchor = 0;
-//    bool finished = false;
-//    int n = data.size();
-//    while(!finished) {
-//        double x_sum = anchor + anchor + 1;
-//        double x_2_sum = anchor*anchor + (anchor+1)*(anchor+1);
-//        double y_sum = data[anchor] + data[anchor+1];
-//        double xy_sum = anchor * data[anchor] + (anchor+1) * data[anchor+1];
-//        int i = 2;
-//        double x_bar;
-//        double y_bar;
-//        double a;
-//        double b;
-//        double epsilon = 0.;
-//        double f = 0.;
-//        double gamma = 0;
-//        while(epsilon <= max_error) {
-//            x_sum += anchor+i;
-//            y_sum += data[anchor+i];
-//            x_2_sum += (anchor+i) * (anchor+i);
-//            xy_sum += (anchor+i) * data[anchor+i];
-//            x_bar = anchor + (double)i / 2;
-//            y_bar = y_sum / i;
-//            a = (xy_sum - n * x_bar * y_bar) / (x_2_sum - n * x_bar * x_bar);
-//            b = y_bar - a * x_bar;
-//            epsilon += (data[anchor+i] - (a*(anchor+i) + b)) * (data[anchor+i] - (a*(anchor+i) + b));
-//            i++;
-//        }
-//
-//    }
-//    return segments;
-//}
+std::vector<Segment> SlidingWindow::create_segments_opt(std::vector<double> data, double max_error) {
+    std::vector<Segment> segments;
+    int anchor = 0;
+    int n = data.size();
+    while(true) {
+        double x_sum = anchor + anchor + 1;
+        double x_2_sum = anchor*anchor + (anchor+1)*(anchor+1);
+        double y_sum = data[anchor] + data[anchor+1];
+        double xy_sum = anchor * data[anchor] + (anchor+1) * data[anchor+1];
+        int i = 2;
+        double x_bar = x_sum / 2;
+        double y_bar = y_sum / 2;
+        double a = (xy_sum - i * x_bar * y_bar) / (x_2_sum - i * x_bar * x_bar);
+        double b = y_bar - a * x_bar;
+        double epsilon = 0.;
+        double f = 0.;
+        double gamma = 0;
+        double pre_a;
+        double pre_b;
+        while(anchor + i < n && epsilon <= max_error) {
+            x_sum += anchor+i;
+            y_sum += data[anchor+i];
+            x_2_sum += (anchor+i) * (anchor+i);
+            xy_sum += (anchor+i) * data[anchor+i];
+            x_bar = anchor + (double)i / 2;
+            y_bar = y_sum / (i+1);
+            pre_a = a;
+            pre_b = b;
+            a = (xy_sum - (i+1) * x_bar * y_bar) / (x_2_sum - (i+1) * x_bar * x_bar);
+            b = y_bar - a * x_bar;
+            if(anchor + i == (n-1)) {
+                i++;
+                break;
+            }
+            epsilon += (data[anchor+i] - (a*(anchor+i) + b)) * (data[anchor+i] - (a*(anchor+i) + b));
+            if(epsilon > max_error) break;
+            i++;
+        }
+        epsilon = 0.;
+        a = pre_a;
+        b = pre_b;
+        for(int k=anchor;k<anchor+i;k++) {
+            epsilon += (data[k] - (a*k+b)) * (data[k] - (a*k+b));
+            f += (a*k+b) * (a*k+b);
+            gamma += (a*k+b);
+        }
+        epsilon = sqrt(epsilon);
+        f = sqrt(f);
+        if(i == n) gamma = std::abs(y_sum - gamma);
+        else gamma = std::abs(y_sum - data[anchor+i] - gamma);
+        std::vector<double> param;
+        param.push_back(a);
+        param.push_back(b);
+        segments.emplace_back(param, anchor, anchor + i, epsilon, f, gamma);
+        anchor += i;
+        if(anchor >= n) break;
+    }
+    return segments;
+}
 
 std::vector<Segment> constant(double value, int begin, int end, double error_guarantee) {
     std::vector<double> param;
@@ -235,13 +263,13 @@ double sum_of_times(const std::vector<Segment>& segments1, const std::vector<Seg
         if(k == segments1[i].end-1 || k == end-1) i++;
         if(k == segments2[j].end-1 || k == end-1) j++;
     }
-    error_guarantee += compute_gamma_f(segments1, segments2);
-    error_guarantee += compute_gamma_f(segments2, segments1);
-    error_guarantee += compute_gamma_gamma(segments1, segments2);
+    error_guarantee += compute_gamma_f_opt(segments1, segments2);
+    error_guarantee += compute_gamma_f_opt(segments2, segments1);
+    error_guarantee += compute_gamma_gamma_opt(segments1, segments2);
     return res;
 }
 
-double compute_gamma_f(const std::vector<Segment>& segments1, const std::vector<Segment>& segments2) {
+double compute_gamma_f_opt(const std::vector<Segment>& segments1, const std::vector<Segment>& segments2) {
     int begin = std::max(segments1[0].begin, segments2[0].begin);
     int end = std::min(segments1[segments1.size()-1].end, segments2[segments2.size()-1].end);
     int i = 0;
@@ -282,6 +310,47 @@ double compute_gamma_f(const std::vector<Segment>& segments1, const std::vector<
     return res;
 }
 
+double compute_gamma_f(const std::vector<Segment>& segments1, const std::vector<Segment>& segments2) {
+    int begin = std::max(segments1[0].begin, segments2[0].begin);
+    int end = std::min(segments1[segments1.size()-1].end, segments2[segments2.size()-1].end);
+    int i = 0;
+    while(segments1[i].end <= begin) i++;
+    int j = 0;
+    while(segments2[j].end <= begin) j++;
+    double res = 0;
+    double sos = 0; // sum of square
+//    std::vector<double> fuck;
+    bool overlap = false;
+    for(int k=begin;k<end;k++) {
+        double value1 = segments1[i].param[0] * k + segments1[i].param[1];
+        double value2 = segments2[j].param[0] * k + segments2[j].param[1];
+//        fuck.push_back(value2);
+        sos += (value2 - value1) * (value2 - value1);
+//        sos += value2 * value2;
+        if(k == segments2[j].end-1 || k == end-1) {
+            if(k != segments1[i].end - 1 && k != end-1) overlap = true;
+            j++;
+        }
+        if(k == segments1[i].end-1 || k == end-1) {
+            res += segments1[i].epsilon * std::sqrt(sos);
+            sos = 0;
+            i++;
+//            if(overlap) {
+//                std::vector<double> param;
+//                double epsilon;
+//                double f;
+//                double gamma;
+//                double sos = linear_regression(fuck, param, k, epsilon, f, gamma);
+//                res += segments1[i].epsilon * sos;
+//            }
+//            overlap = false;
+//            i++;
+//            fuck.clear();
+        }
+    }
+    return res;
+}
+
 double compute_gamma_gamma(const std::vector<Segment>& segments1, const std::vector<Segment>& segments2) {
     int begin = std::max(segments1[0].begin, segments2[0].begin);
     int end = std::min(segments1[segments1.size()-1].end, segments2[segments2.size()-1].end);
@@ -304,6 +373,48 @@ double compute_gamma_gamma(const std::vector<Segment>& segments1, const std::vec
     e2 += segments2[j].epsilon * segments2[j].epsilon;
     e2 = std::sqrt(e2);
     return e1 * e2;
+}
+
+double compute_gamma_gamma_opt(const std::vector<Segment>& segments1, const std::vector<Segment>& segments2) {
+    int begin = std::max(segments1[0].begin, segments2[0].begin);
+    int end = std::min(segments1[segments1.size()-1].end, segments2[segments2.size()-1].end);
+    int i = 0;
+    while(segments1[i].end <= begin) i++;
+    int j = 0;
+    while(segments2[j].end <= begin) j++;
+    int local_start = begin;
+    std::vector<Interval> opt;
+    while(segments1[i].end < end && segments2[j].end < end) {
+        int local_end = std::max(segments1[i].end, segments2[j].end);
+        opt.emplace_back(local_start, local_end);
+        local_start = local_end;
+        while(segments1[i].end < end && segments1[i].end <= local_end) i++;
+        while(segments2[j].end < end && segments2[j].end <= local_end) j++;
+    }
+    opt.emplace_back(local_start, end);
+    double e = 0.;
+    i = 0;
+    while(segments1[i].end <= begin) i++;
+    j = 0;
+    while(segments2[j].end <= begin) j++;
+    for(int k=0;k<opt.size();k++) {
+        double e1 = 0.;
+        while(i < segments1.size() && segments1[i].begin < opt[k].end) {
+            e1 += segments1[i].epsilon * segments1[i].epsilon;
+            if(segments1[i].end > opt[k].end) break;
+            i++;
+        }
+        e1 = sqrt(e1);
+        double e2 = 0;
+        while(j < segments2.size() && segments2[j].begin < opt[k].end) {
+            e2 += segments2[j].epsilon * segments2[j].epsilon;
+            if(segments2[j].end > opt[k].end) break;
+            j++;
+        }
+        e2 = sqrt(e2);
+        e += e1 * e2;
+    }
+    return e;
 }
 
 //double compute_gamma_gamma(const std::vector<Segment>& segments1, const std::vector<Segment>& segments2) {
@@ -357,6 +468,3 @@ double compute_gamma_gamma(const std::vector<Segment>& segments1, const std::vec
 //    std::cout << linear_regression(fuck, param, 52423, epsilon, f, gamma) << std::endl;
 //    return 0;
 //}
-
-
-
