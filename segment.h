@@ -25,6 +25,8 @@ public:
 class SlidingWindow : public Estimator{
 public:
     std::vector<Segment> create_segments(std::vector<double> data, double max_error, double (*ff)(std::vector<double> data, std::vector<double> &param, int offset, double& epsilon, double& f, double& gamma)) override;
+
+//    std::vector<Segment> create_segments_opt(std::vector<double> data, double max_error);
 };
 
 std::string serialize(const Segment& segment);

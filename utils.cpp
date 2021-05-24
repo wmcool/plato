@@ -14,12 +14,12 @@ std::vector<double> readfile(const std::string& file_name) {
     std::ifstream in(file_name);
     std::vector<double> data;
     double cur;
-    double avg = 0;
-    int n = 0;
+//    double avg = 0;
+//    int n = 0;
     while(in >> cur) {
         data.push_back(cur);
-        avg += cur;
-        n++;
+//        avg += cur;
+//        n++;
     }
     in.close();
 //    std::cout<< std::fixed << std::setprecision(10) << avg/n << std::endl;

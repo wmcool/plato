@@ -17,6 +17,7 @@ double average(const std::vector<Segment>& segments, double& error_guarantee) {
         }
         error_guarantee += segment.gamma;
     }
+    error_guarantee /= n;
     return res/n;
 }
 
@@ -24,8 +25,8 @@ double standard_deviation(std::vector<Segment>& segments, double& error_guarante
     double mu_error_guarantee = 0;
     double mu = average(segments, mu_error_guarantee);
     int n = segments[segments.size()-1].end - segments[0].begin;
-    for(Segment segment : segments) {
-        segment.param[1] -= mu;
+    for(int i=0;i<segments.size();i++) {
+        segments[i].param[1] -= mu;
     }
     double res = sum_of_times(segments, segments, error_guarantee);
     error_guarantee /= n;
@@ -43,7 +44,7 @@ double correlation(std::vector<Segment>& segments1, std::vector<Segment>& segmen
     int begin = std::max(segments1[0].begin, segments2[0].begin);
     int end = std::min(segments1[segments1.size()-1].end, segments2[segments2.size()-1].end);
     int n = end - begin;
-//    std::cout << "mu1: " << mu1 << " mu2: " << mu2 << std::endl;
+    std::cout << "mu1: " << mu1 << " mu2: " << mu2 << std::endl;
     for(int i=0;i<segments1.size();i++) {
         segments1[i].param[1] -= mu1;
     }
@@ -57,8 +58,8 @@ double correlation(std::vector<Segment>& segments1, std::vector<Segment>& segmen
     double var2_error_guarantee = 0;
     double var1 = standard_deviation(segments1, var1_error_guarantee);
     double var2 = standard_deviation(segments2, var2_error_guarantee);
-    std::cout << "error_guarantee: " << error_guarantee << " var1_error_guarantee: " << var1_error_guarantee
-    << " var2_error_guarantee: " << var2_error_guarantee << std::endl;
+//    std::cout << "error_guarantee: " << error_guarantee << " var1_error_guarantee: " << var1_error_guarantee
+//    << " var2_error_guarantee: " << var2_error_guarantee << std::endl;
     std::cout << "sigma1: " << var1 << " sigma2: " << var2 << std::endl;
     error_guarantee = (error_guarantee * var1 + res * var1_error_guarantee) / ((var1 - var1_error_guarantee) * var1);
     res /= var1;
