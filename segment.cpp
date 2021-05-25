@@ -265,7 +265,7 @@ double sum_of_times(const std::vector<Segment>& segments1, const std::vector<Seg
     }
     error_guarantee += compute_gamma_f_opt(segments1, segments2);
     error_guarantee += compute_gamma_f_opt(segments2, segments1);
-    error_guarantee += compute_gamma_gamma_opt(segments1, segments2);
+//    error_guarantee += compute_gamma_gamma_opt(segments1, segments2);
     return res;
 }
 
