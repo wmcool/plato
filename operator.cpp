@@ -61,9 +61,9 @@ double correlation(std::vector<Segment>& segments1, std::vector<Segment>& segmen
 //    std::cout << "error_guarantee: " << error_guarantee << " var1_error_guarantee: " << var1_error_guarantee
 //    << " var2_error_guarantee: " << var2_error_guarantee << std::endl;
     std::cout << "sigma1: " << var1 << " sigma2: " << var2 << std::endl;
-    error_guarantee = (error_guarantee * var1 + res * var1_error_guarantee) / ((var1 - var1_error_guarantee) * var1);
+    error_guarantee = (error_guarantee * var1 + res * var1_error_guarantee) / ((std::abs(var1 - var1_error_guarantee)) * var1);
     res /= var1;
-    error_guarantee = (error_guarantee * var2 + res * var2_error_guarantee) / ((var2 - var2_error_guarantee) * var2);
+    error_guarantee = (error_guarantee * var2 + res * var2_error_guarantee) / ((std::abs(var2 - var2_error_guarantee)) * var2);
     res /= var2;
     return res;
 }

@@ -33,8 +33,8 @@ int main(int argc, char *argv[]) {
         string output_name = parser.get<string>("output_name");
         vector<double> data = readfile(filename);
         SlidingWindow sw;
-//        std::vector<Segment> segments = sw.create_segments(data, max_error, linear_regression);
-        std::vector<Segment> segments = sw.create_segments_opt(data, max_error);
+        std::vector<Segment> segments = sw.create_segments(data, max_error, linear_regression);
+//        std::vector<Segment> segments = sw.create_segments_opt(data, max_error);
         write_segments(segments, output_name);
     }else if(action == "average") {
         string table_name = parser.get<string>("table");

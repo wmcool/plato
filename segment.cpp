@@ -71,6 +71,7 @@ double linear_regression(std::vector<double> data, std::vector<double> &param, i
     f = 0;
     gamma = 0;
     for(int i=0;i<n;i++) {
+        double fuck = a*(i+offset) + b;
         epsilon += (data[i] - a*(i+offset) - b) * (data[i] - a*(i+offset) - b);
         f += (a*(i+offset) + b) * (a*(i+offset) + b);
         gamma += (a*(i+offset) + b);
@@ -104,8 +105,11 @@ std::vector<Segment> SlidingWindow::create_segments(std::vector<double> data, do
             pre_f = f;
             pre_gamma = gamma;
             pre_param = param;
+            if((anchor+i) == n) {
+                i++;
+                break;
+            }
             sub_data.push_back(data[anchor+i]);
-            if((anchor+i) == (n-1)) i++;
             i++;
         }
         segments.emplace_back(pre_param, anchor, anchor + i - 1, pre_epsilon, pre_f, pre_gamma);
@@ -265,7 +269,7 @@ double sum_of_times(const std::vector<Segment>& segments1, const std::vector<Seg
     }
     error_guarantee += compute_gamma_f_opt(segments1, segments2);
     error_guarantee += compute_gamma_f_opt(segments2, segments1);
-//    error_guarantee += compute_gamma_gamma_opt(segments1, segments2);
+    error_guarantee += compute_gamma_gamma_opt(segments1, segments2);
     return res;
 }
 
